@@ -184,13 +184,13 @@ A skill is not considered complete until both test types exist and pass.
    `urllib.request.urlopen` (via `unittest.mock`) for HTTP-level tests (retry
    behavior, error code handling, successful responses). No network access.
 
-3. **Integration tests** (`tests/test_integration.py`) — make real API calls
-   against live Azure OpenAI (or OpenAI) endpoints. Credentials are resolved
-   in this order:
+3. **Integration tests** (`tests/test_integration_<skill_name>.py`) — one file
+   per skill, making real API calls against live Azure OpenAI (or OpenAI)
+   endpoints. Credentials are resolved in this order:
    - Environment variables: `AZURE_OPENAI_ENDPOINT`, `AZURE_OPENAI_API_KEY`,
      `AZURE_OPENAI_CHAT_DEPLOYMENT`, etc.
-   - Auto-discovery via `az CLI`: the test harness runs
-     `az cognitiveservices account list` and
+   - Auto-discovery via `az CLI`: the shared helper (`tests/conftest.py`)
+     runs `az cognitiveservices account list` and
      `az cognitiveservices account keys list` to find resources and keys
      automatically when env vars are not set. This works out of the box on
      any machine where `az login` has been run.
@@ -210,10 +210,14 @@ A skill is not considered complete until both test types exist and pass.
    ```
 3. Test public functions directly (URL builders, payload constructors).
 4. Use `@patch("myscript.<http_function>")` to mock HTTP and test `main()`.
-5. Add integration test cases in `tests/test_integration.py` under a new
-   `TestCase` class for your skill. Use `@unittest.skipIf` / `skipUnless` to
-   gate on the required credentials or deployments.
-6. Verify `run_tests.py -v` passes before committing.
+5. Create `tests/test_integration_<skill_name>.py` with live API tests.
+   Import the shared credential helper:
+   ```python
+   sys.path.insert(0, os.path.dirname(__file__))
+   from conftest import skip_reason_openai
+   ```
+   Use `@unittest.skipIf(skip_reason, skip_reason)` to gate on credentials.
+6. Verify: `python3 run_tests.py -v` (all tests pass).
 
 ## Commit conventions
 
