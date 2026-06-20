@@ -35,6 +35,13 @@ import urllib.error
 import urllib.request
 from typing import Optional
 
+# Ensure UTF-8 output on Windows (where stdout defaults to system code page)
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8")
+
+
 DEFAULT_API_VERSION = "2024-10-21"
 OPENAI_DEFAULT_ENDPOINT = "https://api.openai.com"
 

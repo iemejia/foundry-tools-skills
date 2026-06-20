@@ -51,7 +51,16 @@ These are non-negotiable. Any script added MUST satisfy all of them:
    `argparse`.
 5. **No secrets in the repo.** Never commit keys, tokens, endpoints with
    embedded credentials, or `.env` files.
-6. **Cross-platform.** Must run on macOS and Linux without modification.
+6. **Cross-platform.** Must run on Windows, macOS, and Linux without
+   modification. Specific considerations:
+   - Use `os.path` for filesystem paths (never hardcode `/` separators).
+   - Always pass `encoding="utf-8"` when opening text files.
+   - Call `sys.stdout.reconfigure(encoding="utf-8")` (and stderr) at
+     script startup — Windows defaults to the system code page, not UTF-8.
+   - Use `os.linesep` awareness but rely on Python's universal newline
+     mode (the default) for reading.
+   - Avoid OS-specific APIs (`os.fork`, `os.symlink`, `/dev/null` paths).
+   - Test with `python3` on Unix and `python` or `py` on Windows.
 7. **OpenAI API compatibility.** Scripts that target OpenAI-compatible
    services (chat completions, embeddings, image generation, etc.) MUST work
    against both the Azure OpenAI endpoint **and** the real OpenAI API

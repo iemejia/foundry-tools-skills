@@ -26,6 +26,13 @@ import urllib.error
 import urllib.request
 from xml.sax.saxutils import escape as xml_escape
 
+# Ensure UTF-8 output on Windows (where stdout defaults to system code page)
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8")
+
+
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
@@ -337,7 +344,7 @@ def main(argv=None):
                 "Check the path and ensure the file exists.",
             )
             return 1
-        with open(args.ssml_file, "r") as f:
+        with open(args.ssml_file, "r", encoding="utf-8") as f:
             ssml = f.read()
     elif args.text:
         text = sys.stdin.read().strip() if args.text == "-" else args.text
