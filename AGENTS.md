@@ -52,6 +52,16 @@ These are non-negotiable. Any script added MUST satisfy all of them:
 5. **No secrets in the repo.** Never commit keys, tokens, endpoints with
    embedded credentials, or `.env` files.
 6. **Cross-platform.** Must run on macOS and Linux without modification.
+7. **OpenAI API compatibility.** Scripts that target OpenAI-compatible
+   services (chat completions, embeddings, image generation, etc.) MUST work
+   against both the Azure OpenAI endpoint **and** the real OpenAI API
+   (`https://api.openai.com`). This means: support `Authorization: Bearer`
+   auth (OpenAI) in addition to `api-key` header (Azure); accept the standard
+   `OPENAI_API_KEY` env var alongside `AZURE_OPENAI_API_KEY`; include the
+   `model` field in the request body; and handle the differing URL structures
+   (Azure: `/openai/deployments/{name}/...?api-version=`, OpenAI:
+   `/v1/chat/completions`). A `--provider` flag or auto-detection from the
+   endpoint URL is the recommended approach.
 
 ## Script conventions
 

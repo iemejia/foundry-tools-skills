@@ -47,10 +47,17 @@ Each script is standalone. Set the required environment variables (documented
 in the corresponding `SKILL.md` and the script's `--help`) and run it:
 
 ```sh
+# OpenAI
+export OPENAI_API_KEY="sk-..."
+python3 skills/azure-openai-chat/scripts/chat.py \
+  --model "gpt-4o-mini" \
+  --prompt "Hello, Foundry!"
+
+# Azure OpenAI
 export AZURE_OPENAI_API_KEY="<your-key>"
 python3 skills/azure-openai-chat/scripts/chat.py \
   --endpoint "https://<resource>.openai.azure.com" \
-  --deployment "gpt-4o-mini" \
+  --model "gpt-4o-mini" \
   --prompt "Hello, Foundry!"
 ```
 
