@@ -248,7 +248,7 @@ def main(argv=None):
 
     payload = {"messages": messages, "model": args.model}
     if args.max_tokens is not None:
-        payload["max_tokens"] = args.max_tokens
+        payload["max_completion_tokens"] = args.max_tokens
     if args.temperature is not None:
         payload["temperature"] = args.temperature
 
