@@ -124,7 +124,10 @@ scripts under `scripts/`, and copy-pasteable example invocations.
 1. Create `skills/<service-name>/SKILL.md` with frontmatter.
 2. Add one or more scripts under `skills/<service-name>/scripts/`.
 3. Verify each script: `python3 skills/<service-name>/scripts/<task>.py --help`.
-4. List the new skill in `README.md`.
+4. Write unit tests in `tests/test_<skill_name>.py`.
+5. Add integration test cases in `tests/test_integration.py`.
+6. Verify: `python3 run_tests.py -v` (all tests pass).
+7. List the new skill in `README.md`.
 
 ## Verification
 
@@ -144,21 +147,39 @@ python3 run_tests.py        # all tests
 python3 run_tests.py -v     # verbose
 ```
 
+### Test requirement
+
+Every new skill MUST include both:
+
+1. **Unit tests** — test all logic without network access.
+2. **Integration tests** — test against live APIs with real credentials.
+
+A skill is not considered complete until both test types exist and pass.
+
 ### Test layers
 
 1. **Skill validation** (`tests/test_skill_validation.py`) — auto-discovers all
    skills and checks: directory structure, SKILL.md frontmatter, script
    compilation (`py_compile`), and `--help` exits 0. Runs with no credentials.
 
-2. **Unit tests** (`tests/test_<skill-name>.py`) — import each script as a
+2. **Unit tests** (`tests/test_<skill_name>.py`) — import each script as a
    module via `importlib.util` and test pure logic: URL building, payload
    construction, provider detection, argument parsing, error messages. Mock
    `urllib.request.urlopen` (via `unittest.mock`) for HTTP-level tests (retry
    behavior, error code handling, successful responses). No network access.
 
-3. **Integration tests** (optional, not run in CI by default) — spin up a local
-   HTTP server (`http.server`) returning canned JSON responses, then exercise
-   scripts end-to-end against `http://localhost:<port>`.
+3. **Integration tests** (`tests/test_integration.py`) — make real API calls
+   against live Azure OpenAI (or OpenAI) endpoints. Credentials are resolved
+   in this order:
+   - Environment variables: `AZURE_OPENAI_ENDPOINT`, `AZURE_OPENAI_API_KEY`,
+     `AZURE_OPENAI_CHAT_DEPLOYMENT`, etc.
+   - Auto-discovery via `az CLI`: the test harness runs
+     `az cognitiveservices account list` and
+     `az cognitiveservices account keys list` to find resources and keys
+     automatically when env vars are not set. This works out of the box on
+     any machine where `az login` has been run.
+   - Tests are **skipped gracefully** (not failed) if no credentials are
+     available — safe for CI environments without secrets configured.
 
 ### Writing tests for a new skill
 
@@ -173,7 +194,10 @@ python3 run_tests.py -v     # verbose
    ```
 3. Test public functions directly (URL builders, payload constructors).
 4. Use `@patch("myscript.<http_function>")` to mock HTTP and test `main()`.
-5. Verify `run_tests.py -v` passes before committing.
+5. Add integration test cases in `tests/test_integration.py` under a new
+   `TestCase` class for your skill. Use `@unittest.skipIf` / `skipUnless` to
+   gate on the required credentials or deployments.
+6. Verify `run_tests.py -v` passes before committing.
 
 ## Commit conventions
 
