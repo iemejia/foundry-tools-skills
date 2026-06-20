@@ -39,6 +39,8 @@ skills/
 | [`openai-images`](skills/openai-images/) | OpenAI / Azure OpenAI — Image Generation (gpt-image-1/2) | stable |
 | [`openai-tts`](skills/openai-tts/) | OpenAI / Azure OpenAI — Text-to-Speech (tts-1/tts-1-hd) | new |
 | [`openai-transcription`](skills/openai-transcription/) | OpenAI / Azure OpenAI — Audio Transcription (whisper-1/gpt-4o-transcribe) | new |
+| [`azure-ai-translator`](skills/azure-ai-translator/) | Azure AI Translator — Text Translation (100+ languages) | new |
+| [`azure-doc-intelligence`](skills/azure-doc-intelligence/) | Azure Document Intelligence — PDF/Image extraction | new |
 
 More service skills (Speech, Vision, Language, Translator, Document
 Intelligence, Content Safety, ...) will be added over time — one script per
