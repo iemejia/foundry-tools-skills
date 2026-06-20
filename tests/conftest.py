@@ -60,6 +60,23 @@ def az_discover_openai():
             os.environ.setdefault("AZURE_OPENAI_ENDPOINT", res["endpoint"])
             os.environ.setdefault("AZURE_OPENAI_API_KEY", key_result.stdout.strip())
             os.environ.setdefault("AZURE_OPENAI_CHAT_DEPLOYMENT", chat_dep["name"])
+
+            # Also discover TTS and transcription deployments if present
+            tts_dep = next(
+                (d for d in deployments if d["model"].startswith("tts-")),
+                None,
+            )
+            if tts_dep:
+                os.environ.setdefault("AZURE_OPENAI_TTS_DEPLOYMENT", tts_dep["name"])
+
+            transcribe_dep = next(
+                (d for d in deployments
+                 if "transcribe" in d["model"] or d["model"] == "whisper-1"),
+                None,
+            )
+            if transcribe_dep:
+                os.environ.setdefault("AZURE_OPENAI_TRANSCRIPTION_DEPLOYMENT", transcribe_dep["name"])
+
             return
     except (OSError, ValueError, subprocess.TimeoutExpired):
         pass
