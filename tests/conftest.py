@@ -424,3 +424,160 @@ def skip_reason_speech():
             "Integration tests require AZURE_AI_SPEECH_REGION. Skipping."
         )
     return None
+
+
+# ---------------------------------------------------------------------------
+# Azure AI Face
+# ---------------------------------------------------------------------------
+
+
+def az_discover_face():
+    """Discover Azure Face credentials via az CLI."""
+    if (os.environ.get("AZURE_AI_FACE_API_KEY")
+            and os.environ.get("AZURE_AI_FACE_ENDPOINT")):
+        return
+    try:
+        result = subprocess.run(
+            ["az", "cognitiveservices", "account", "list",
+             "--query",
+             "[?kind=='Face'].{name:name, rg:resourceGroup, "
+             "endpoint:properties.endpoint}",
+             "-o", "json"],
+            capture_output=True, text=True, timeout=30,
+        )
+        if result.returncode != 0:
+            return
+        resources = json.loads(result.stdout)
+        if not resources:
+            return
+        res = resources[0]
+        key = _az_get_key(res["name"], res["rg"])
+        if not key:
+            return
+        os.environ.setdefault("AZURE_AI_FACE_API_KEY", key)
+        if res.get("endpoint"):
+            os.environ.setdefault("AZURE_AI_FACE_ENDPOINT", res["endpoint"])
+    except (OSError, ValueError, subprocess.TimeoutExpired):
+        pass
+
+
+def skip_reason_face():
+    """Return a skip reason if Face credentials are unavailable."""
+    az_discover_face()
+    if not os.environ.get("AZURE_AI_FACE_API_KEY"):
+        return (
+            "Integration tests require AZURE_AI_FACE_API_KEY "
+            "(or az CLI login with a Face resource). Skipping."
+        )
+    if not os.environ.get("AZURE_AI_FACE_ENDPOINT"):
+        return (
+            "Integration tests require AZURE_AI_FACE_ENDPOINT. Skipping."
+        )
+    return None
+
+
+# ---------------------------------------------------------------------------
+# Azure Video Indexer
+# ---------------------------------------------------------------------------
+
+
+def az_discover_video_indexer():
+    """Discover Azure Video Indexer credentials via az CLI.
+
+    Video Indexer uses ARM-based auth, not Cognitive Services keys.
+    This discovers the account, generates an access token via the ARM API.
+    """
+    if (os.environ.get("AZURE_VIDEO_INDEXER_ACCESS_TOKEN")
+            and os.environ.get("AZURE_VIDEO_INDEXER_ACCOUNT_ID")
+            and os.environ.get("AZURE_VIDEO_INDEXER_LOCATION")):
+        return
+    try:
+        # Discover VI account
+        result = subprocess.run(
+            ["az", "resource", "list",
+             "--resource-type", "Microsoft.VideoIndexer/accounts",
+             "--query",
+             "[0].{name:name, rg:resourceGroup, id:id, location:location}",
+             "-o", "json"],
+            capture_output=True, text=True, timeout=30,
+        )
+        if result.returncode != 0:
+            return
+        info = json.loads(result.stdout)
+        if not info:
+            return
+
+        # Get accountId (GUID) from resource properties
+        show_result = subprocess.run(
+            ["az", "resource", "show", "--ids", info["id"],
+             "--query", "properties.accountId", "-o", "tsv"],
+            capture_output=True, text=True, timeout=30,
+        )
+        if show_result.returncode != 0:
+            return
+        account_id = show_result.stdout.strip()
+        if not account_id:
+            return
+
+        os.environ.setdefault("AZURE_VIDEO_INDEXER_ACCOUNT_ID", account_id)
+        os.environ.setdefault("AZURE_VIDEO_INDEXER_LOCATION", info["location"])
+
+        # Generate access token via ARM
+        arm_result = subprocess.run(
+            ["az", "account", "get-access-token",
+             "--resource", "https://management.azure.com",
+             "--query", "accessToken", "-o", "tsv"],
+            capture_output=True, text=True, timeout=30,
+        )
+        if arm_result.returncode != 0:
+            return
+        arm_token = arm_result.stdout.strip()
+        if not arm_token:
+            return
+
+        # Extract subscription ID from resource ID
+        parts = info["id"].split("/")
+        sub_idx = parts.index("subscriptions") + 1
+        sub_id = parts[sub_idx]
+
+        import urllib.request
+        import urllib.error
+        url = (
+            "https://management.azure.com/subscriptions/{}/resourceGroups/{}"
+            "/providers/Microsoft.VideoIndexer/accounts/{}"
+            "/generateAccessToken?api-version=2024-01-01"
+        ).format(sub_id, info["rg"], info["name"])
+        body = json.dumps({
+            "permissionType": "Contributor", "scope": "Account",
+        }).encode("utf-8")
+        req = urllib.request.Request(
+            url, data=body,
+            headers={
+                "Authorization": "Bearer " + arm_token,
+                "Content-Type": "application/json",
+            },
+            method="POST",
+        )
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            token_data = json.loads(resp.read().decode("utf-8"))
+        vi_token = token_data.get("accessToken", "")
+        if vi_token:
+            os.environ.setdefault("AZURE_VIDEO_INDEXER_ACCESS_TOKEN", vi_token)
+    except Exception:
+        pass
+
+
+def skip_reason_video_indexer():
+    """Return a skip reason if Video Indexer credentials are unavailable."""
+    az_discover_video_indexer()
+    if not os.environ.get("AZURE_VIDEO_INDEXER_ACCOUNT_ID"):
+        return (
+            "Integration tests require AZURE_VIDEO_INDEXER_ACCOUNT_ID "
+            "(or az CLI with a VideoIndexer resource). Skipping."
+        )
+    if not os.environ.get("AZURE_VIDEO_INDEXER_ACCESS_TOKEN"):
+        return (
+            "Integration tests require AZURE_VIDEO_INDEXER_ACCESS_TOKEN. "
+            "Skipping."
+        )
+    return None

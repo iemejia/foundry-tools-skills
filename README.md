@@ -45,6 +45,8 @@ skills/
 | [`azure-ai-language`](skills/azure-ai-language/) | Azure AI Language — Sentiment, NER, key phrases, PII, language detection | new |
 | [`azure-content-safety`](skills/azure-content-safety/) | Azure Content Safety — Text and image moderation (Hate, SelfHarm, Sexual, Violence) | new |
 | [`azure-ai-speech`](skills/azure-ai-speech/) | Azure AI Speech — TTS (400+ neural voices, SSML) and STT (short audio) | new |
+| [`azure-ai-face`](skills/azure-ai-face/) | Azure AI Face — Face detection with attributes and landmarks | new |
+| [`azure-ai-video-indexer`](skills/azure-ai-video-indexer/) | Azure Video Indexer — Video upload, indexing, transcripts, insights | new |
 
 More service skills will be added over time — one script per task.
 
