@@ -3,7 +3,7 @@
 
 Service: OpenAI API / Azure OpenAI / Azure AI Foundry
 Task:    Generate images from a text prompt using DALL-E 2, DALL-E 3,
-         or gpt-image-1.
+         gpt-image-1, or gpt-image-2.
 
 Works with both the real OpenAI API and Azure OpenAI deployments.
 Provider is auto-detected from the endpoint URL or can be forced with
@@ -13,6 +13,8 @@ Supported models:
     dall-e-2      256x256, 512x512, 1024x1024; up to n=10
     dall-e-3      1024x1024, 1792x1024, 1024x1792; n=1 only; style/quality
     gpt-image-1   1024x1024, 1536x1024, 1024x1536, auto; quality low/med/high
+    gpt-image-2   1024x1024, 1536x1024, 1024x1536, 2048x2048, auto;
+                  quality low/medium/high; up to n=4; 2K/4K resolution
 
 Required environment variables (one of):
     OPENAI_API_KEY          API key for the OpenAI platform.
@@ -20,13 +22,13 @@ Required environment variables (one of):
 
 Example (OpenAI):
     export OPENAI_API_KEY="sk-..."
-    python3 generate.py --model dall-e-3 --prompt "A cat in space"
+    python3 generate.py --model gpt-image-2 --prompt "A cat in space"
 
 Example (Azure OpenAI):
     export AZURE_OPENAI_API_KEY="<your-key>"
     python3 generate.py \\
         --endpoint "https://<resource>.openai.azure.com" \\
-        --model dall-e-3 \\
+        --model gpt-image-2 \\
         --prompt "A cat in space"
 """
 
@@ -44,6 +46,9 @@ from typing import Optional
 
 DEFAULT_API_VERSION = "2024-10-21"
 OPENAI_DEFAULT_ENDPOINT = "https://api.openai.com"
+
+# Models that use output_format (b64 inline) vs response_format (url/b64_json)
+_GPT_IMAGE_MODELS = ("gpt-image-1", "gpt-image-2")
 
 
 # ---------------------------------------------------------------------------
@@ -159,6 +164,12 @@ def _save_image(image_data, index, output_dir, output_format):
 # Payload building (model-aware)
 # ---------------------------------------------------------------------------
 
+def _is_gpt_image_model(model):
+    # type: (str) -> bool
+    """Check if the model is a gpt-image family model."""
+    return model.startswith("gpt-image-")
+
+
 def build_payload(args, provider):
     # type: (argparse.Namespace, str) -> dict
     """Build the request payload, adapting parameters to the model."""
@@ -170,8 +181,14 @@ def build_payload(args, provider):
         if model == "dall-e-3" and args.n != 1:
             _emit_error(
                 "dall-e-3 only supports n=1.",
-                "Remove --n or set --n 1. Use dall-e-2 or gpt-image-1 for "
-                "multiple images per request.",
+                "Remove --n or set --n 1. Use dall-e-2, gpt-image-1, or "
+                "gpt-image-2 for multiple images per request.",
+            )
+            sys.exit(1)
+        if model == "gpt-image-2" and args.n > 4:
+            _emit_error(
+                "gpt-image-2 supports at most n=4 images per request.",
+                "Set --n to 4 or fewer.",
             )
             sys.exit(1)
         payload["n"] = args.n
@@ -197,22 +214,21 @@ def build_payload(args, provider):
         payload["style"] = args.style
 
     # Response format / output format
-    if model == "gpt-image-1":
-        # gpt-image-1 uses output_format instead of response_format
+    if _is_gpt_image_model(model):
+        # gpt-image-* models use output_format and return b64 inline
         if args.output_format:
             payload["output_format"] = args.output_format
-        # gpt-image-1 always returns b64 inline
     else:
         # dall-e-2 and dall-e-3 use response_format
-        # Request b64_json so we can save without downloading URLs
         payload["response_format"] = "b64_json"
 
-    # Background (gpt-image-1 only)
+    # Background (gpt-image-* models only)
     if args.background:
-        if model != "gpt-image-1":
+        if not _is_gpt_image_model(model):
             _emit_error(
-                "--background is only supported by gpt-image-1.",
-                "Remove --background or switch to --model gpt-image-1.",
+                "--background is only supported by gpt-image models.",
+                "Remove --background or switch to --model gpt-image-1 or "
+                "gpt-image-2.",
             )
             sys.exit(1)
         payload["background"] = args.background
@@ -228,7 +244,8 @@ def parse_args(argv=None):
     # type: (Optional[list]) -> argparse.Namespace
     parser = argparse.ArgumentParser(
         description="Generate images with the OpenAI or Azure OpenAI Images API "
-        "(zero dependencies). Supports dall-e-2, dall-e-3, and gpt-image-1.",
+        "(zero dependencies). Supports dall-e-2, dall-e-3, gpt-image-1, "
+        "and gpt-image-2.",
     )
     parser.add_argument(
         "--endpoint",
@@ -239,7 +256,8 @@ def parse_args(argv=None):
     parser.add_argument(
         "--model",
         required=True,
-        help="Model or Azure deployment name: dall-e-2, dall-e-3, or gpt-image-1.",
+        help="Model or Azure deployment name: dall-e-2, dall-e-3, "
+        "gpt-image-1, or gpt-image-2.",
     )
     parser.add_argument(
         "--prompt",
@@ -256,17 +274,20 @@ def parse_args(argv=None):
         "--n",
         type=int,
         default=None,
-        help="Number of images to generate (dall-e-3 only supports 1).",
+        help="Number of images to generate. Limits: dall-e-3=1, gpt-image-2<=4, "
+        "dall-e-2<=10.",
     )
     parser.add_argument(
         "--size",
         default=None,
-        help="Image size, e.g. 1024x1024, 1792x1024, 1536x1024.",
+        help="Image size, e.g. 1024x1024, 1792x1024, 1536x1024, 2048x2048, "
+        "or 'auto'.",
     )
     parser.add_argument(
         "--quality",
         default=None,
-        help="Quality: standard/hd (dall-e-3) or low/medium/high (gpt-image-1).",
+        help="Quality: standard/hd (dall-e-3) or low/medium/high "
+        "(gpt-image-1, gpt-image-2).",
     )
     parser.add_argument(
         "--style",
@@ -278,13 +299,14 @@ def parse_args(argv=None):
         "--background",
         choices=["transparent", "opaque", "auto"],
         default=None,
-        help="Background type (gpt-image-1 only).",
+        help="Background type (gpt-image-1 and gpt-image-2 only).",
     )
     parser.add_argument(
         "--output-format",
         choices=["png", "jpeg", "webp"],
         default=None,
-        help="Output image format (gpt-image-1 only; others always use png).",
+        help="Output image format (gpt-image-1/gpt-image-2 only; "
+        "dall-e models always produce png).",
     )
     parser.add_argument(
         "--output-dir",
@@ -336,20 +358,23 @@ def _hint_for_http_error(code, provider, model, detail):
         if provider == "azure":
             return (
                 "Deployment '{0}' not found. Verify it exists in your Azure "
-                "OpenAI resource and that --endpoint is correct.".format(model)
+                "OpenAI resource (supported regions: East US 2, West US 3, "
+                "Sweden Central) and that --endpoint is correct.".format(model)
             )
         return (
             "Model '{0}' not found or not available for your account. "
-            "Verify model name (dall-e-2, dall-e-3, gpt-image-1). "
+            "Valid models: dall-e-2, dall-e-3, gpt-image-1, gpt-image-2. "
             "See https://platform.openai.com/docs/models".format(model)
         )
     if code == 400:
         if "size" in detail:
             return (
-                "Invalid size for model '{0}'. Check supported sizes: "
+                "Invalid size for model '{0}'. Supported sizes: "
                 "dall-e-2: 256x256/512x512/1024x1024, "
                 "dall-e-3: 1024x1024/1792x1024/1024x1792, "
-                "gpt-image-1: 1024x1024/1536x1024/1024x1536/auto.".format(model)
+                "gpt-image-1: 1024x1024/1536x1024/1024x1536/auto, "
+                "gpt-image-2: 1024x1024/1536x1024/1024x1536/2048x2048/auto."
+                .format(model)
             )
         if "content_policy" in detail or "safety" in detail:
             return (
