@@ -43,10 +43,10 @@ skills/
 | [`azure-doc-intelligence`](skills/azure-doc-intelligence/) | Azure Document Intelligence — PDF/Image extraction | new |
 | [`azure-ai-vision`](skills/azure-ai-vision/) | Azure AI Vision — Image captioning, OCR, tagging, object detection | new |
 | [`azure-ai-language`](skills/azure-ai-language/) | Azure AI Language — Sentiment, NER, key phrases, PII, language detection | new |
+| [`azure-content-safety`](skills/azure-content-safety/) | Azure Content Safety — Text and image moderation (Hate, SelfHarm, Sexual, Violence) | new |
+| [`azure-ai-speech`](skills/azure-ai-speech/) | Azure AI Speech — TTS (400+ neural voices, SSML) and STT (short audio) | new |
 
-More service skills (Speech, Vision, Language, Translator, Document
-Intelligence, Content Safety, ...) will be added over time — one script per
-task.
+More service skills will be added over time — one script per task.
 
 ## Usage
 

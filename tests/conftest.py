@@ -316,3 +316,111 @@ def skip_reason_language():
             "Integration tests require AZURE_AI_LANGUAGE_ENDPOINT. Skipping."
         )
     return None
+
+
+# ---------------------------------------------------------------------------
+# Azure Content Safety
+# ---------------------------------------------------------------------------
+
+
+def az_discover_content_safety():
+    """Discover Azure Content Safety credentials via az CLI."""
+    if (os.environ.get("AZURE_CONTENT_SAFETY_API_KEY")
+            and os.environ.get("AZURE_CONTENT_SAFETY_ENDPOINT")):
+        return
+    try:
+        result = subprocess.run(
+            ["az", "cognitiveservices", "account", "list",
+             "--query",
+             "[?kind=='ContentSafety'].{name:name, rg:resourceGroup, "
+             "endpoint:properties.endpoint}",
+             "-o", "json"],
+            capture_output=True, text=True, timeout=30,
+        )
+        if result.returncode != 0:
+            return
+        resources = json.loads(result.stdout)
+        if not resources:
+            return
+        res = resources[0]
+        key = _az_get_key(res["name"], res["rg"])
+        if not key:
+            return
+        os.environ.setdefault("AZURE_CONTENT_SAFETY_API_KEY", key)
+        if res.get("endpoint"):
+            os.environ.setdefault(
+                "AZURE_CONTENT_SAFETY_ENDPOINT", res["endpoint"]
+            )
+    except (OSError, ValueError, subprocess.TimeoutExpired):
+        pass
+
+
+def skip_reason_content_safety():
+    """Return a skip reason if Content Safety credentials are unavailable."""
+    az_discover_content_safety()
+    if not os.environ.get("AZURE_CONTENT_SAFETY_API_KEY"):
+        return (
+            "Integration tests require AZURE_CONTENT_SAFETY_API_KEY "
+            "(or az CLI login with a ContentSafety resource). Skipping."
+        )
+    if not os.environ.get("AZURE_CONTENT_SAFETY_ENDPOINT"):
+        return (
+            "Integration tests require AZURE_CONTENT_SAFETY_ENDPOINT. "
+            "Skipping."
+        )
+    return None
+
+
+# ---------------------------------------------------------------------------
+# Azure AI Speech
+# ---------------------------------------------------------------------------
+
+
+def az_discover_speech():
+    """Discover Azure Speech credentials via az CLI."""
+    if (os.environ.get("AZURE_AI_SPEECH_API_KEY")
+            and os.environ.get("AZURE_AI_SPEECH_REGION")):
+        return
+    try:
+        result = subprocess.run(
+            ["az", "cognitiveservices", "account", "list",
+             "--query",
+             "[?kind=='SpeechServices'].{name:name, rg:resourceGroup, "
+             "location:location, endpoint:properties.endpoint}",
+             "-o", "json"],
+            capture_output=True, text=True, timeout=30,
+        )
+        if result.returncode != 0:
+            return
+        resources = json.loads(result.stdout)
+        if not resources:
+            return
+        res = resources[0]
+        key = _az_get_key(res["name"], res["rg"])
+        if not key:
+            return
+        os.environ.setdefault("AZURE_AI_SPEECH_API_KEY", key)
+        os.environ.setdefault("AZURE_AI_SPEECH_REGION", res["location"])
+        # Only set endpoint for custom domain resources
+        # (*.cognitiveservices.azure.com). Generic endpoints like
+        # *.api.cognitive.microsoft.com don't support TTS/STT paths.
+        ep = res.get("endpoint", "")
+        if ep and ".cognitiveservices.azure.com" in ep:
+            os.environ.setdefault("AZURE_AI_SPEECH_ENDPOINT", ep)
+    except (OSError, ValueError, subprocess.TimeoutExpired):
+        pass
+
+
+def skip_reason_speech():
+    """Return a skip reason if Speech credentials are unavailable."""
+    az_discover_speech()
+    if not os.environ.get("AZURE_AI_SPEECH_API_KEY"):
+        return (
+            "Integration tests require AZURE_AI_SPEECH_API_KEY "
+            "(or az CLI login with a SpeechServices resource). Skipping."
+        )
+    if not os.environ.get("AZURE_AI_SPEECH_REGION"):
+        return (
+            "Integration tests require AZURE_AI_SPEECH_REGION. Skipping."
+        )
+    return None
