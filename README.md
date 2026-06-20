@@ -36,6 +36,7 @@ skills/
 | Skill | Service | Status |
 |-------|---------|--------|
 | [`openai-chat`](skills/openai-chat/) | OpenAI / Azure OpenAI — Chat Completions | example stub |
+| [`openai-images`](skills/openai-images/) | OpenAI / Azure OpenAI — Image Generation (DALL-E 2/3, gpt-image-1) | new |
 
 More service skills (Speech, Vision, Language, Translator, Document
 Intelligence, Content Safety, ...) will be added over time — one script per
