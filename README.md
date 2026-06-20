@@ -41,6 +41,8 @@ skills/
 | [`openai-transcription`](skills/openai-transcription/) | OpenAI / Azure OpenAI — Audio Transcription (whisper-1/gpt-4o-transcribe) | new |
 | [`azure-ai-translator`](skills/azure-ai-translator/) | Azure AI Translator — Text Translation (100+ languages) | new |
 | [`azure-doc-intelligence`](skills/azure-doc-intelligence/) | Azure Document Intelligence — PDF/Image extraction | new |
+| [`azure-ai-vision`](skills/azure-ai-vision/) | Azure AI Vision — Image captioning, OCR, tagging, object detection | new |
+| [`azure-ai-language`](skills/azure-ai-language/) | Azure AI Language — Sentiment, NER, key phrases, PII, language detection | new |
 
 More service skills (Speech, Vision, Language, Translator, Document
 Intelligence, Content Safety, ...) will be added over time — one script per

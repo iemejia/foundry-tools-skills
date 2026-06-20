@@ -216,3 +216,103 @@ def skip_reason_doc_intelligence():
             "Skipping."
         )
     return None
+
+
+# ---------------------------------------------------------------------------
+# Azure AI Vision
+# ---------------------------------------------------------------------------
+
+
+def az_discover_vision():
+    """Discover Azure Computer Vision credentials via az CLI."""
+    if (os.environ.get("AZURE_AI_VISION_API_KEY")
+            and os.environ.get("AZURE_AI_VISION_ENDPOINT")):
+        return
+    try:
+        result = subprocess.run(
+            ["az", "cognitiveservices", "account", "list",
+             "--query",
+             "[?kind=='ComputerVision'].{name:name, rg:resourceGroup, "
+             "endpoint:properties.endpoint}",
+             "-o", "json"],
+            capture_output=True, text=True, timeout=30,
+        )
+        if result.returncode != 0:
+            return
+        resources = json.loads(result.stdout)
+        if not resources:
+            return
+        res = resources[0]
+        key = _az_get_key(res["name"], res["rg"])
+        if not key:
+            return
+        os.environ.setdefault("AZURE_AI_VISION_API_KEY", key)
+        if res.get("endpoint"):
+            os.environ.setdefault("AZURE_AI_VISION_ENDPOINT", res["endpoint"])
+    except (OSError, ValueError, subprocess.TimeoutExpired):
+        pass
+
+
+def skip_reason_vision():
+    """Return a skip reason if Vision credentials are unavailable."""
+    az_discover_vision()
+    if not os.environ.get("AZURE_AI_VISION_API_KEY"):
+        return (
+            "Integration tests require AZURE_AI_VISION_API_KEY "
+            "(or az CLI login with a ComputerVision resource). Skipping."
+        )
+    if not os.environ.get("AZURE_AI_VISION_ENDPOINT"):
+        return (
+            "Integration tests require AZURE_AI_VISION_ENDPOINT. Skipping."
+        )
+    return None
+
+
+# ---------------------------------------------------------------------------
+# Azure AI Language
+# ---------------------------------------------------------------------------
+
+
+def az_discover_language():
+    """Discover Azure Language credentials via az CLI."""
+    if (os.environ.get("AZURE_AI_LANGUAGE_API_KEY")
+            and os.environ.get("AZURE_AI_LANGUAGE_ENDPOINT")):
+        return
+    try:
+        result = subprocess.run(
+            ["az", "cognitiveservices", "account", "list",
+             "--query",
+             "[?kind=='TextAnalytics'].{name:name, rg:resourceGroup, "
+             "endpoint:properties.endpoint}",
+             "-o", "json"],
+            capture_output=True, text=True, timeout=30,
+        )
+        if result.returncode != 0:
+            return
+        resources = json.loads(result.stdout)
+        if not resources:
+            return
+        res = resources[0]
+        key = _az_get_key(res["name"], res["rg"])
+        if not key:
+            return
+        os.environ.setdefault("AZURE_AI_LANGUAGE_API_KEY", key)
+        if res.get("endpoint"):
+            os.environ.setdefault("AZURE_AI_LANGUAGE_ENDPOINT", res["endpoint"])
+    except (OSError, ValueError, subprocess.TimeoutExpired):
+        pass
+
+
+def skip_reason_language():
+    """Return a skip reason if Language credentials are unavailable."""
+    az_discover_language()
+    if not os.environ.get("AZURE_AI_LANGUAGE_API_KEY"):
+        return (
+            "Integration tests require AZURE_AI_LANGUAGE_API_KEY "
+            "(or az CLI login with a TextAnalytics resource). Skipping."
+        )
+    if not os.environ.get("AZURE_AI_LANGUAGE_ENDPOINT"):
+        return (
+            "Integration tests require AZURE_AI_LANGUAGE_ENDPOINT. Skipping."
+        )
+    return None
