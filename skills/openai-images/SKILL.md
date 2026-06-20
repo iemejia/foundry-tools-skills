@@ -2,12 +2,12 @@
 name: openai-images
 description: >
   Generate images using the OpenAI or Azure OpenAI Images API with a single,
-  dependency-free Python script. Supports all model generations (dall-e-2,
-  dall-e-3, gpt-image-1, gpt-image-2). Auto-detects provider from endpoint.
+  dependency-free Python script. Supports gpt-image-1 and gpt-image-2.
+  Auto-detects provider from endpoint.
   Use when the user wants to: (1) generate images from text prompts,
   (2) script image generation without installing the openai SDK,
   (3) produce images in CI/CD or agent workflows.
-  Triggers: "openai image", "generate image", "dall-e", "gpt-image",
+  Triggers: "openai image", "generate image", "gpt-image",
   "image generation", "text to image", "azure image generation"
 ---
 
@@ -25,8 +25,6 @@ Provider is auto-detected from the endpoint URL or can be forced with
 
 | Model | Sizes | Quality | Max n | Notes |
 |-------|-------|---------|-------|-------|
-| `dall-e-2` | 256x256, 512x512, 1024x1024 | — | 10 | Legacy; retired May 2026 |
-| `dall-e-3` | 1024x1024, 1792x1024, 1024x1792 | standard, hd | 1 | Legacy; style support; retired May 2026 |
 | `gpt-image-1` | 1024x1024, 1536x1024, 1024x1536, auto | low, medium, high | 10 | Transparent backgrounds |
 | `gpt-image-2` | 1024x1024, 1536x1024, 1024x1536, 2048x2048, auto | low, medium, high | 4 | Latest; 2K/4K; transparent bg; multilingual text rendering |
 
@@ -89,7 +87,7 @@ python3 skills/openai-images/scripts/generate.py \
   --size 1024x1024
 ```
 
-**Transparent background (gpt-image-1/2):**
+**Transparent background:**
 
 ```sh
 python3 skills/openai-images/scripts/generate.py \
