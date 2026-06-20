@@ -62,6 +62,22 @@ These are non-negotiable. Any script added MUST satisfy all of them:
    (Azure: `/openai/deployments/{name}/...?api-version=`, OpenAI:
    `/v1/chat/completions`). A `--provider` flag or auto-detection from the
    endpoint URL is the recommended approach.
+8. **Environment variables are the primary auth mechanism.** Scripts MUST
+   read credentials from env vars first (never prompt interactively). Use
+   consistent, well-known variable names across all scripts:
+
+   | Variable | Purpose |
+   |----------|---------|
+   | `OPENAI_API_KEY` | OpenAI platform API key |
+   | `AZURE_OPENAI_API_KEY` | Azure OpenAI resource key |
+   | `AZURE_OPENAI_ENDPOINT` | Azure OpenAI resource endpoint URL |
+
+   For non-OpenAI Azure AI services, follow the pattern
+   `AZURE_<SERVICE>_API_KEY` and `AZURE_<SERVICE>_ENDPOINT` (e.g.
+   `AZURE_SPEECH_API_KEY`, `AZURE_SPEECH_ENDPOINT`). Reuse the same
+   variable names across scripts that talk to the same service — a user
+   who sets the vars once should be able to run any script in that service
+   without re-configuring.
 
 ## Script conventions
 
