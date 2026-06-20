@@ -135,6 +135,46 @@ python3 -m py_compile skills/<service-name>/scripts/<task>.py
 python3 skills/<service-name>/scripts/<task>.py --help
 ```
 
+## Testing
+
+Run the full test suite (stdlib `unittest` only, zero dependencies):
+
+```sh
+python3 run_tests.py        # all tests
+python3 run_tests.py -v     # verbose
+```
+
+### Test layers
+
+1. **Skill validation** (`tests/test_skill_validation.py`) — auto-discovers all
+   skills and checks: directory structure, SKILL.md frontmatter, script
+   compilation (`py_compile`), and `--help` exits 0. Runs with no credentials.
+
+2. **Unit tests** (`tests/test_<skill-name>.py`) — import each script as a
+   module via `importlib.util` and test pure logic: URL building, payload
+   construction, provider detection, argument parsing, error messages. Mock
+   `urllib.request.urlopen` (via `unittest.mock`) for HTTP-level tests (retry
+   behavior, error code handling, successful responses). No network access.
+
+3. **Integration tests** (optional, not run in CI by default) — spin up a local
+   HTTP server (`http.server`) returning canned JSON responses, then exercise
+   scripts end-to-end against `http://localhost:<port>`.
+
+### Writing tests for a new skill
+
+1. Create `tests/test_<skill_name>.py` (replace hyphens with underscores).
+2. Import the script as a module:
+   ```python
+   import importlib.util, sys
+   _spec = importlib.util.spec_from_file_location("myscript", "<path>")
+   myscript = importlib.util.module_from_spec(_spec)
+   _spec.loader.exec_module(myscript)
+   sys.modules["myscript"] = myscript  # enables @patch("myscript.func")
+   ```
+3. Test public functions directly (URL builders, payload constructors).
+4. Use `@patch("myscript.<http_function>")` to mock HTTP and test `main()`.
+5. Verify `run_tests.py -v` passes before committing.
+
 ## Commit conventions
 
 - Imperative subject line ≤ 50 chars; body explaining the why when useful.
