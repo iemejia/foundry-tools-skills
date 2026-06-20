@@ -35,7 +35,7 @@ skills/
 
 | Skill | Service | Status |
 |-------|---------|--------|
-| [`azure-openai-chat`](skills/azure-openai-chat/) | Azure OpenAI — Chat Completions | example stub |
+| [`openai-chat`](skills/openai-chat/) | OpenAI / Azure OpenAI — Chat Completions | example stub |
 
 More service skills (Speech, Vision, Language, Translator, Document
 Intelligence, Content Safety, ...) will be added over time — one script per
@@ -49,13 +49,13 @@ in the corresponding `SKILL.md` and the script's `--help`) and run it:
 ```sh
 # OpenAI
 export OPENAI_API_KEY="sk-..."
-python3 skills/azure-openai-chat/scripts/chat.py \
+python3 skills/openai-chat/scripts/chat.py \
   --model "gpt-4o-mini" \
   --prompt "Hello, Foundry!"
 
 # Azure OpenAI
 export AZURE_OPENAI_API_KEY="<your-key>"
-python3 skills/azure-openai-chat/scripts/chat.py \
+python3 skills/openai-chat/scripts/chat.py \
   --endpoint "https://<resource>.openai.azure.com" \
   --model "gpt-4o-mini" \
   --prompt "Hello, Foundry!"
@@ -64,7 +64,7 @@ python3 skills/azure-openai-chat/scripts/chat.py \
 Run any script with `--help` to see its options:
 
 ```sh
-python3 skills/azure-openai-chat/scripts/chat.py --help
+python3 skills/openai-chat/scripts/chat.py --help
 ```
 
 ## Contributing

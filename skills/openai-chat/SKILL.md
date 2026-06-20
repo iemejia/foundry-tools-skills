@@ -1,16 +1,16 @@
 ---
-name: azure-openai-chat
+name: openai-chat
 description: >
   Call the OpenAI or Azure OpenAI Chat Completions API using a single,
   dependency-free Python script. Auto-detects the provider from the endpoint.
   Use when the user wants to: (1) send a prompt to an OpenAI or Azure OpenAI
   chat model, (2) script LLM calls without installing the openai SDK,
   (3) get JSON-parseable completions from a terminal or CI job.
-  Triggers: "azure openai chat", "openai chat", "call gpt deployment",
+  Triggers: "openai chat", "azure openai chat", "call gpt deployment",
   "chat completion", "foundry chat", "openai without sdk"
 ---
 
-# azure-openai-chat — Chat Completions via a zero-dependency script
+# openai-chat — Chat Completions via a zero-dependency script
 
 This skill calls the **Chat Completions** endpoint on either:
 
@@ -48,7 +48,7 @@ Send a single prompt (optionally with a system message) and print the response.
 ```sh
 export OPENAI_API_KEY="sk-..."
 
-python3 skills/azure-openai-chat/scripts/chat.py \
+python3 skills/openai-chat/scripts/chat.py \
   --model "gpt-4o-mini" \
   --prompt "Hello, world!"
 ```
@@ -58,7 +58,7 @@ python3 skills/azure-openai-chat/scripts/chat.py \
 ```sh
 export AZURE_OPENAI_API_KEY="<your-key>"
 
-python3 skills/azure-openai-chat/scripts/chat.py \
+python3 skills/openai-chat/scripts/chat.py \
   --endpoint "https://<resource>.openai.azure.com" \
   --model "gpt-4o-mini" \
   --system "You are a terse assistant." \
@@ -68,7 +68,7 @@ python3 skills/azure-openai-chat/scripts/chat.py \
 Print the full JSON response instead of just the message text:
 
 ```sh
-python3 skills/azure-openai-chat/scripts/chat.py \
+python3 skills/openai-chat/scripts/chat.py \
   --model "gpt-4o-mini" \
   --prompt "Say hi" \
   --raw
@@ -77,5 +77,5 @@ python3 skills/azure-openai-chat/scripts/chat.py \
 See all options:
 
 ```sh
-python3 skills/azure-openai-chat/scripts/chat.py --help
+python3 skills/openai-chat/scripts/chat.py --help
 ```

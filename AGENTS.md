@@ -28,7 +28,7 @@ foundry-tools-skills/
 └── ...
 ```
 
-- `<service-name>` is a lowercase, hyphenated slug (e.g. `azure-openai-chat`,
+- `<service-name>` is a lowercase, hyphenated slug (e.g. `openai-chat`,
   `ai-speech-tts`, `document-intelligence`, `content-safety`).
 - Each script under `scripts/` solves **one** task and is executable on its own.
 
