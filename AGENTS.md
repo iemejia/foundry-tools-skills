@@ -78,6 +78,30 @@ These are non-negotiable. Any script added MUST satisfy all of them:
 - Add a brief `# Requires: Python >= 3.8, standard library only` comment near
   the top.
 
+### Agent-friendly error output
+
+Scripts are primarily invoked by coding agents (AI assistants, CI bots,
+orchestrators). Every error message MUST include:
+
+1. **What failed** — the specific operation or check that went wrong.
+2. **Why it likely failed** — interpret HTTP status codes, missing env vars,
+   malformed input, etc. into a probable root cause.
+3. **How to fix it** — a concrete remediation step: the exact env var to set,
+   the flag to pass, the URL to visit, or the command to run.
+4. **Structured format** — emit errors as a single-line JSON object to
+   `stderr` so agents can parse them programmatically:
+   `{"error": "<what>", "hint": "<how to fix>"}`.
+
+Common patterns:
+- `401/403` → "Authentication failed. Verify OPENAI_API_KEY is valid.
+  Generate a new key at https://platform.openai.com/api-keys"
+- `404` → "Model or deployment not found. Check --model value. For Azure,
+  verify the deployment exists in your resource."
+- `429` → "Rate limited. Wait and retry, or reduce request frequency."
+- Missing env var → Tell the agent exactly which variable to `export` and
+  where to obtain the value.
+- Network error → Suggest checking the --endpoint URL and connectivity.
+
 ## SKILL.md conventions
 
 Each skill begins with YAML frontmatter:
